@@ -1,0 +1,3 @@
+image:
+  repository: example/sample-node
+  tag: "ci"
