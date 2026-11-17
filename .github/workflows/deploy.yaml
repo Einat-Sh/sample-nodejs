@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+  workflow_dispatch:        # manual trigger for tests
+
+permissions:
+  contents: read
+
+jobs:
+  # test lint for helm charts and semgrep 
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+
+      - name: Lint chart (default values)
+        run: helm lint helm/sample-node --strict
+
+      - name: Lint chart (CI values)
+        run: helm lint helm/sample-node --strict -f helm/sample-node/ci/test-values.yaml
+
+      - name: Install Semgrep
+        run: pipx install semgrep
+
+      - name: Semgrep scan
+        run: semgrep scan --config p/javascript --config p/nodejs --config p/owasp-top-ten --error .
+
+  # TODO: image build, test and deploy to dockerhub
+
+  # TODO: update tag for srgoCD
