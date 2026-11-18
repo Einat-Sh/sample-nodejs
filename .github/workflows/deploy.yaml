@@ -120,11 +120,11 @@ jobs:
       - name: Checkout GitOps repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # version 7.0.1
         with:
-          repository: einatsh/sample-nodejs-gitops
+          repository: Einat-Sh/sample-nodejs-gitops
           token: ${{ secrets.GITOPS_TOKEN }}
 
       - name: Set image tag
-        run: yq -i '.image.tag = "${{ github.sha }}"' apps/app/dev/values.yaml
+        run: yq -i '.image.tag = "${{ github.sha }}"' apps/sample-nodejs/dev/values.yaml
 
       - name: Commit and push
         run: |
