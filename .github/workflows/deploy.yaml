@@ -107,4 +107,35 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  # TODO: update tag for srgoCD
+  # update tag for argoCD dev
+  Gitops-Update:
+    runs-on: ubuntu-latest
+    needs: Image
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    concurrency:
+      group: Gitops-Update # make sure only one job for updating the gitops repo is being run
+      cancel-in-progress: false # let a running push finish - the next run waits its turn
+
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # version 7.0.1
+        with:
+          repository: einatsh/sample-nodejs-gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+
+      - name: Set image tag
+        run: yq -i '.image.tag = "${{ github.sha }}"' apps/app/dev/values.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/sample-nodejs/dev/values.yaml
+          if git diff --cached --quiet; then
+            echo "Tag unchanged, nothing to commit"
+            exit 0
+          fi
+          git commit -m "app: deploy ${GITHUB_SHA::7} to dev"
+          git pull --rebase origin main
+          git push origin HEAD:main    
+
